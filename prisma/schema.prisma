@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relações
+  ordensCliente OrdemServico[] @relation("OrdensCliente")
+  ordensTecnico OrdemServico[] @relation("OrdensTecnico")
+  estoque       Estoque[]      @relation("UserEstoque")
+
+  movOrigem  MovimentacaoEstoque[] @relation("MovOrigemTecnico")
+  movDestino MovimentacaoEstoque[] @relation("MovDestinoTecnico")
+
+  pedidos PedidoEstoque[]
+}
+
+model Filial {
+  id      String    @id @default(uuid())
+  nome    String
+  estoque Estoque[] @relation("FilialEstoque")
+
+  movOrigem  MovimentacaoEstoque[] @relation("MovOrigemFilial")
+  movDestino MovimentacaoEstoque[] @relation("MovDestinoFilial")
+  devolucoes PedidoEstoque[]       @relation("FilialDestino")
+}
+
+model Produto {
+  id            String                @id @default(uuid())
+  nome          String
+  preco         Float
+  descricao     String?
+  fornecedor    String
+  categoria     String?
+  estoque       Estoque[]
+  movimentacoes MovimentacaoEstoque[]
+  pedidos       PedidoEstoque[]
+}
+
+model Estoque {
+  id         String @id @default(uuid())
+  quantidade Int
+
+  produto   Produto @relation(fields: [produtoId], references: [id])
+  produtoId String
+
+  filial   Filial? @relation("FilialEstoque", fields: [filialId], references: [id])
+  filialId String?
+
+  tecnico   User?   @relation("UserEstoque", fields: [tecnicoId], references: [id])
+  tecnicoId String?
+
+  @@unique([produtoId, tecnicoId, filialId])
+}
+
+model OrdemServico {
+  id        String   @id @default(uuid())
+  status    Status   @default(ABERTA)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cliente   User   @relation("OrdensCliente", fields: [clienteId], references: [id])
+  clienteId String
+
+  tecnico   User?   @relation("OrdensTecnico", fields: [tecnicoId], references: [id])
+  tecnicoId String?
+}
+
+model MovimentacaoEstoque {
+  id         String           @id @default(uuid())
+  tipo       TipoMovimentacao
+  quantidade Int
+  createdAt  DateTime         @default(now())
+
+  produto   Produto @relation(fields: [produtoId], references: [id])
+  produtoId String
+
+  origemFilial   Filial? @relation("MovOrigemFilial", fields: [origemFilialId], references: [id])
+  origemFilialId String?
+
+  destinoFilial   Filial? @relation("MovDestinoFilial", fields: [destinoFilialId], references: [id])
+  destinoFilialId String?
+
+  origemTecnico   User?   @relation("MovOrigemTecnico", fields: [origemTecnicoId], references: [id])
+  origemTecnicoId String?
+
+  destinoTecnico   User?   @relation("MovDestinoTecnico", fields: [destinoTecnicoId], references: [id])
+  destinoTecnicoId String?
+}
+
+model PedidoEstoque {
+  id         String       @id @default(uuid())
+  quantidade Int
+  status     StatusPedido @default(PENDENTE)
+  createdAt  DateTime     @default(now())
+
+  produto   Produto @relation(fields: [produtoId], references: [id])
+  produtoId String
+
+  tecnico   User   @relation(fields: [tecnicoId], references: [id])
+  tecnicoId String
+
+  filialDestino   Filial? @relation("FilialDestino", fields: [filialDestinoId], references: [id])
+  filialDestinoId String?
+}
+
+enum Role {
+  ADMIN
+  CONSULTOR
+  TECNICO
+  CLIENTE
+  ESTOQUISTA
+}
+
+enum Status {
+  ABERTA
+  EM_ANDAMENTO
+  FECHADA
+}
+
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+  TRANSFERENCIA
+}
+
+enum StatusPedido {
+  PENDENTE
+  APROVADO
+  REJEITADO
+  DEVOLUCAO_PENDENTE
+  DEVOLUCAO_APROVADA
+  DEVOLUCAO_REJEITADA
+}
