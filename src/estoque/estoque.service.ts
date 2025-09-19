@@ -1,6 +1,7 @@
 // src/estoque/estoque.service.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { $Enums } from '@prisma/client';
 
 @Injectable()
 export class EstoqueService {
@@ -240,7 +241,7 @@ export class EstoqueService {
       // Movimentação
       await tx.movimentacaoEstoque.create({
         data: {
-          tipo: 'DEVOLUCAO',
+          tipo: $Enums.TipoMovimentacao.DEVOLUCAO,
           quantidade,
           produtoId,
           origemTecnicoId: tecnicoId,
