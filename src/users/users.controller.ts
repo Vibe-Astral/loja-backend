@@ -44,4 +44,9 @@ export class UsersController {
   getMe(@Req() req) {
     return req.user;
   }
+  @Roles(Role.ADMIN)
+  @Patch(':id')
+  async atualizarUsuario(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.update(id, dto);
+  }
 }
