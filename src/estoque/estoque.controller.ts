@@ -4,7 +4,7 @@ import {
     Param,
     UseGuards,
     Req, Post, Body,
-    ForbiddenException
+    ForbiddenException, BadRequestException
 } from '@nestjs/common';
 import { EstoqueService } from './estoque.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -62,23 +62,6 @@ export class EstoqueController {
     @Get('tecnico/:tecnicoId/produto/:produtoId')
     obterEstoqueProdutoDeTecnico(@Param('produtoId') produtoId: string, @Param('tecnicoId') tecnicoId: string) {
         return this.estoqueService.obterEstoqueProdutoDeTecnico(produtoId, tecnicoId);
-    }
-    @Post('transferir')
-    async transferirEstoque(
-        @Body()
-        body: {
-            produtoId: string;
-            origemFilialId: string;
-            destinoFilialId: string;
-            quantidade: number;
-        },
-    ) {
-        return this.estoqueService.transferir(
-            body.produtoId,
-            body.origemFilialId,
-            body.destinoFilialId,
-            body.quantidade,
-        );
     }
     @Post('transferir')
     async transferirEstoque(
