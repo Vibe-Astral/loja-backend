@@ -11,14 +11,14 @@ import { Role } from '@prisma/client';
 export class ProdutosController {
   constructor(private readonly produtosService: ProdutosService) { }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.ESTOQUISTA)
   @Post()
-  async create(@Body() dto: CreateProdutoDto) {
+  async criarProduto(@Body() dto: CreateProdutoDto) {
     return this.produtosService.create(dto);
   }
 
   @Get()
-  async findAll() {
+  async listarProdutos() {
     return this.produtosService.findAll();
   }
 
