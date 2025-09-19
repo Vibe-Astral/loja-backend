@@ -80,4 +80,41 @@ export class EstoqueController {
             body.quantidade,
         );
     }
+    @Post('transferir')
+    async transferirEstoque(
+        @Body()
+        body: {
+            produtoId: string;
+            origemFilialId: string;
+            destinoFilialId?: string;
+            destinoTecnicoId?: string;
+            quantidade: number;
+        },
+    ) {
+        if (!body?.quantidade || body.quantidade <= 0) {
+            throw new BadRequestException('Quantidade deve ser maior que zero.');
+        }
+
+        if (body.destinoTecnicoId) {
+            // Filial -> Técnico
+            return this.estoqueService.transferirParaTecnico(
+                body.produtoId,
+                body.origemFilialId,
+                body.destinoTecnicoId,
+                body.quantidade,
+            );
+        }
+
+        if (!body.destinoFilialId) {
+            throw new BadRequestException('Informe destinoFilialId ou destinoTecnicoId.');
+        }
+
+        // Filial -> Filial (com movimentação registrada)
+        return this.estoqueService.transferir(
+            body.produtoId,
+            body.origemFilialId,
+            body.destinoFilialId,
+            body.quantidade,
+        );
+    }
 }
