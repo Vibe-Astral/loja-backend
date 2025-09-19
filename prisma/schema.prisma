@@ -134,6 +134,7 @@ enum TipoMovimentacao {
   ENTRADA
   SAIDA
   TRANSFERENCIA
+  DEVOLUCAO
 }
 
 enum StatusPedido {
