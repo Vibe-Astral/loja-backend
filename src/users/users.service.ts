@@ -27,48 +27,49 @@ export class UsersService {
       role: user.role,
       filial: user.filial, // 👈 retorna o objeto filial
     };
+  }
 
   async listarTodos() {
-      return this.prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          role: true,
-          createdAt: true,
-          filial: { select: { id: true, nome: true } }, // 👈 novo
-        },
-      });
-    }
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        filial: { select: { id: true, nome: true } }, // 👈 novo
+      },
+    });
+  }
   async findAll() {
-      return this.prisma.user.findMany({
-        select: { id: true, email: true, role: true, createdAt: true },
-      });
-    }
+    return this.prisma.user.findMany({
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
+  }
   async criarUsuario(email: string, password: string, role: Role) {
-      const hash = await bcrypt.hash(password, 10);
-      return this.prisma.user.create({
-        data: { email, password: hash, role },
-      });
-    }
+    const hash = await bcrypt.hash(password, 10);
+    return this.prisma.user.create({
+      data: { email, password: hash, role },
+    });
+  }
 
   async deletarUsuario(id: string) {
-      return this.prisma.user.delete({ where: { id } });
-    }
+    return this.prisma.user.delete({ where: { id } });
+  }
 
   async update(id: string, dto: UpdateUserDto) {
-      let data: any = { ...dto };
+    let data: any = { ...dto };
 
-      if (dto.password) {
-        data.password = await bcrypt.hash(dto.password, 10); // 👈 hash no reset
-      }
-
-      const user = await this.prisma.user.update({
-        where: { id },
-        data,
-        include: { filial: true },
-      });
-
-      return { id: user.id, email: user.email, role: user.role, filial: user.filial };
+    if (dto.password) {
+      data.password = await bcrypt.hash(dto.password, 10); // 👈 hash no reset
     }
 
+    const user = await this.prisma.user.update({
+      where: { id },
+      data,
+      include: { filial: true },
+    });
+
+    return { id: user.id, email: user.email, role: user.role, filial: user.filial };
   }
+
+}
