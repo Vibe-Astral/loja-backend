@@ -1,12 +1,22 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req } from '@nestjs/common';
+// src/pedidos/pedidos.controller.ts
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { PedidosService } from './pedidos.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { $Enums } from '@prisma/client'; // 👈 importa aqui
+import { $Enums } from '@prisma/client';
 
 @Controller('pedidos')
 @UseGuards(JwtAuthGuard)
 export class PedidosController {
-  constructor(private readonly pedidosService: PedidosService) { }
+  constructor(private readonly pedidosService: PedidosService) {}
 
   @Post()
   async criarPedido(
@@ -14,18 +24,15 @@ export class PedidosController {
     @Req() req: any,
   ) {
     return this.pedidosService.criar({
-      tecnicoId: req.user.sub, // ✅ padronizado
+      tecnicoId: req.user.id, // ✅ padronizado
       produtoId: body.produtoId,
       quantidade: body.quantidade,
     });
   }
 
-
-
-
   @Get('me')
   async meusPedidos(@Req() req: any) {
-    const tecnicoId = req.user.sub;
+    const tecnicoId = req.user.id; // ✅ corrigido
     return this.pedidosService.listarPorTecnico(tecnicoId);
   }
 
@@ -33,18 +40,21 @@ export class PedidosController {
   async listarPendentes() {
     return this.pedidosService.listarPendentes();
   }
+
   @Get('devolucoes/pendentes')
   async listarDevolucoesPendentes() {
     return this.pedidosService.listarDevolucoesPendentes();
   }
-
 
   @Patch(':id')
   async atualizarStatus(
     @Param('id') id: string,
     @Body() body: { status: 'PENDENTE' | 'APROVADO' | 'REJEITADO' },
   ) {
-    return this.pedidosService.atualizarStatus(id, body.status as $Enums.StatusPedido);
+    return this.pedidosService.atualizarStatus(
+      id,
+      body.status as $Enums.StatusPedido,
+    );
   }
 
   @Patch(':id/aprovar')
@@ -56,22 +66,18 @@ export class PedidosController {
   async rejeitar(@Param('id') id: string) {
     return this.pedidosService.rejeitarPedido(id);
   }
+
   @Post('devolucao')
-  @UseGuards(JwtAuthGuard)
   async solicitarDevolucao(
-    @Body() body: { produtoId: string; quantidade: number; filialDestinoId: string },
+    @Body()
+    body: { produtoId: string; quantidade: number; filialDestinoId: string },
     @Req() req: any,
   ) {
     return this.pedidosService.solicitarDevolucao(
-      req.user.id,   // 👈 garantido pelo JwtStrategy
+      req.user.id, // ✅ padronizado
       body.produtoId,
       body.quantidade,
       body.filialDestinoId,
     );
   }
-
-
-
-
-
 }
