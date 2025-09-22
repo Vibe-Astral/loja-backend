@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProdutoDto } from './dto/create-produto.dto';
@@ -50,7 +51,9 @@ export class ProdutosService {
 
 
   async findAll() {
-    return this.prisma.produto.findMany();
+    return this.prisma.produto.findMany({
+      orderBy: { nome: 'asc' },
+    });
   }
 
   async findOne(id: string) {

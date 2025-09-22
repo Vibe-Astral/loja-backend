@@ -1,13 +1,16 @@
+/* eslint-disable prettier/prettier */
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, $Enums } from '@prisma/client';
+import { $Enums } from '@prisma/client';
 import { EstoqueService } from '../estoque/estoque.service';
+
 @Injectable()
 export class PedidosService {
   constructor(
     private prisma: PrismaService,
-    private estoqueService: EstoqueService, // 👈 injetar aqui
-  ) { }
+    private estoqueService: EstoqueService,
+  ) {}
+
   async criar(data: { tecnicoId: string; produtoId: string; quantidade: number }) {
     console.log("📝 Criando pedido com dados:", data);
 
@@ -23,6 +26,7 @@ export class PedidosService {
       },
     });
   }
+
   async listarPorTecnico(tecnicoId: string) {
     return this.prisma.pedidoEstoque.findMany({
       where: { tecnicoId },
@@ -30,6 +34,7 @@ export class PedidosService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
   async listarPendentes() {
     return this.prisma.pedidoEstoque.findMany({
       where: { status: 'PENDENTE' },
@@ -39,18 +44,42 @@ export class PedidosService {
   }
 
   async aprovarPedido(id: string) {
-    return this.prisma.pedidoEstoque.update({
+    // Atualiza status
+    const pedido = await this.prisma.pedidoEstoque.update({
       where: { id },
       data: { status: 'APROVADO' },
+      include: { produto: true, tecnico: true },
     });
+
+    // ✅ usa EstoqueService
+    await this.estoqueService.adicionarAoTecnico(
+      pedido.tecnicoId,
+      pedido.produtoId,
+      pedido.quantidade,
+    );
+
+    return pedido;
   }
 
   async rejeitarPedido(id: string) {
+    const pedido = await this.prisma.pedidoEstoque.findUnique({ where: { id } });
+    if (!pedido) throw new BadRequestException('Pedido não encontrado');
+
+    // ✅ rollback se já aprovado
+    if (pedido.status === 'APROVADO') {
+      await this.estoqueService.removerDoTecnico(
+        pedido.tecnicoId,
+        pedido.produtoId,
+        pedido.quantidade,
+      );
+    }
+
     return this.prisma.pedidoEstoque.update({
       where: { id },
       data: { status: 'REJEITADO' },
     });
   }
+
   async atualizarStatus(id: string, status: $Enums.StatusPedido) {
     if (!Object.values($Enums.StatusPedido).includes(status)) {
       throw new BadRequestException("Status inválido");
@@ -62,6 +91,7 @@ export class PedidosService {
       include: { produto: true, tecnico: true, filialDestino: true },
     });
 
+    // ✅ devolução aprovada
     if (status === $Enums.StatusPedido.DEVOLUCAO_APROVADA) {
       if (!pedido.filialDestinoId) {
         throw new BadRequestException("Pedido de devolução sem filial de destino.");
@@ -77,7 +107,6 @@ export class PedidosService {
 
     return pedido;
   }
-
 
   async solicitarDevolucao(
     tecnicoId: string,
@@ -103,6 +132,7 @@ export class PedidosService {
       },
     });
   }
+
   async listarDevolucoesPendentes() {
     return this.prisma.pedidoEstoque.findMany({
       where: { status: 'DEVOLUCAO_PENDENTE' },
@@ -110,5 +140,4 @@ export class PedidosService {
       orderBy: { createdAt: 'desc' },
     });
   }
-
 }

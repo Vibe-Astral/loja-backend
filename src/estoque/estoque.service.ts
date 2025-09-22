@@ -8,7 +8,7 @@ import { $Enums } from '@prisma/client';
 export class EstoqueService {
   constructor(private prisma: PrismaService) {}
 
-  // Lista cada "posição" de estoque (produto x local), com joins
+  // 📊 CONSULTAS
   async listarPosicoes() {
     return this.prisma.estoque.findMany({
       include: {
@@ -20,7 +20,6 @@ export class EstoqueService {
     });
   }
 
-  // Saldo consolidado (soma) por produto
   async saldoProduto(produtoId: string) {
     const agg = await this.prisma.estoque.groupBy({
       by: ['produtoId'],
@@ -30,7 +29,6 @@ export class EstoqueService {
     return { produtoId, quantidade: agg[0]?._sum.quantidade ?? 0 };
   }
 
-  // Saldo geral por produto
   async saldoGeralPorProduto() {
     const agg = await this.prisma.estoque.groupBy({
       by: ['produtoId'],
@@ -91,6 +89,67 @@ export class EstoqueService {
     return pos ?? { produtoId, tecnicoId, quantidade: 0 };
   }
 
+  // ➕ Entrada no estoque do técnico (pedido aprovado)
+  async adicionarAoTecnico(tecnicoId: string, produtoId: string, quantidade: number) {
+    if (quantidade <= 0) throw new BadRequestException('Quantidade inválida');
+
+    const existente = await this.prisma.estoque.findFirst({
+      where: { produtoId, tecnicoId, filialId: null },
+    });
+
+    if (existente) {
+      await this.prisma.estoque.update({
+        where: { id: existente.id },
+        data: { quantidade: existente.quantidade + quantidade },
+      });
+    } else {
+      await this.prisma.estoque.create({
+        data: { produtoId, tecnicoId, filialId: null, quantidade },
+      });
+    }
+
+    await this.prisma.movimentacaoEstoque.create({
+      data: {
+        tipo: $Enums.TipoMovimentacao.ENTRADA,
+        quantidade,
+        produtoId,
+        destinoTecnicoId: tecnicoId,
+      },
+    });
+  }
+
+  // ➖ Saída do estoque do técnico (rollback rejeição)
+  async removerDoTecnico(tecnicoId: string, produtoId: string, quantidade: number) {
+    if (quantidade <= 0) throw new BadRequestException('Quantidade inválida');
+
+    const existente = await this.prisma.estoque.findFirst({
+      where: { produtoId, tecnicoId, filialId: null },
+    });
+
+    if (!existente || existente.quantidade < quantidade) {
+      throw new BadRequestException('Estoque do técnico insuficiente');
+    }
+
+    const novaQtd = existente.quantidade - quantidade;
+    if (novaQtd === 0) {
+      await this.prisma.estoque.delete({ where: { id: existente.id } });
+    } else {
+      await this.prisma.estoque.update({
+        where: { id: existente.id },
+        data: { quantidade: novaQtd },
+      });
+    }
+
+    await this.prisma.movimentacaoEstoque.create({
+      data: {
+        tipo: $Enums.TipoMovimentacao.SAIDA,
+        quantidade,
+        produtoId,
+        origemTecnicoId: tecnicoId,
+      },
+    });
+  }
+
   // 🔄 Transferência entre filiais
   async transferir(
     produtoId: string,
@@ -99,9 +158,7 @@ export class EstoqueService {
     quantidade: number,
   ) {
     if (origemFilialId === destinoFilialId) {
-      throw new BadRequestException(
-        'A filial de origem e destino não podem ser a mesma.',
-      );
+      throw new BadRequestException('A filial de origem e destino não podem ser a mesma.');
     }
     if (quantidade <= 0) {
       throw new BadRequestException('Quantidade deve ser maior que zero.');
@@ -112,9 +169,7 @@ export class EstoqueService {
         where: { produtoId, filialId: origemFilialId },
       });
       if (!origem || origem.quantidade < quantidade) {
-        throw new BadRequestException(
-          'Estoque insuficiente na filial de origem.',
-        );
+        throw new BadRequestException('Estoque insuficiente na filial de origem.');
       }
 
       await tx.estoque.update({
@@ -135,10 +190,9 @@ export class EstoqueService {
         data: { quantidade: destino.quantidade + quantidade },
       });
 
-      // Movimentação
       await tx.movimentacaoEstoque.create({
         data: {
-          tipo: 'TRANSFERENCIA',
+          tipo: $Enums.TipoMovimentacao.TRANSFERENCIA,
           quantidade,
           produtoId,
           origemFilialId,
@@ -166,9 +220,7 @@ export class EstoqueService {
         where: { produtoId, filialId: origemFilialId },
       });
       if (!origem || origem.quantidade < quantidade) {
-        throw new BadRequestException(
-          'Estoque insuficiente na filial de origem.',
-        );
+        throw new BadRequestException('Estoque insuficiente na filial de origem.');
       }
       await tx.estoque.update({
         where: { id: origem.id },
@@ -188,10 +240,9 @@ export class EstoqueService {
         data: { quantidade: destino.quantidade + quantidade },
       });
 
-      // Movimentação
       await tx.movimentacaoEstoque.create({
         data: {
-          tipo: 'TRANSFERENCIA',
+          tipo: $Enums.TipoMovimentacao.TRANSFERENCIA,
           quantidade,
           produtoId,
           origemFilialId,
@@ -239,7 +290,6 @@ export class EstoqueService {
         data: { quantidade: destino.quantidade + quantidade },
       });
 
-      // Movimentação
       await tx.movimentacaoEstoque.create({
         data: {
           tipo: $Enums.TipoMovimentacao.DEVOLUCAO,
