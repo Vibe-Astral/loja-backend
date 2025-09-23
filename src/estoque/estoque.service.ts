@@ -6,7 +6,7 @@ import { $Enums } from '@prisma/client';
 
 @Injectable()
 export class EstoqueService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // 📊 CONSULTAS
   async listarPosicoes() {
@@ -149,7 +149,10 @@ export class EstoqueService {
       },
     });
   }
-
+  @Get("disponiveis/:filialId")
+  async listarDisponiveis(@Param("filialId") filialId: string) {
+    return this.estoqueService.listarPorFilial(filialId);
+  }
   // 🔄 Transferência entre filiais
   async transferir(
     produtoId: string,

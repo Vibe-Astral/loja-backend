@@ -9,7 +9,7 @@ export class PedidosService {
   constructor(
     private prisma: PrismaService,
     private estoqueService: EstoqueService,
-  ) {}
+  ) { }
 
   async criar(data: { tecnicoId: string; produtoId: string; quantidade: number }) {
     console.log("📝 Criando pedido com dados:", data);
@@ -44,22 +44,51 @@ export class PedidosService {
   }
 
   async aprovarPedido(id: string) {
-    // Atualiza status
-    const pedido = await this.prisma.pedidoEstoque.update({
+    // Busca pedido e informações do técnico
+    const pedido = await this.prisma.pedidoEstoque.findUnique({
       where: { id },
-      data: { status: 'APROVADO' },
-      include: { produto: true, tecnico: true },
+      include: {
+        produto: true,
+        tecnico: { include: { filial: true } },
+      },
     });
 
-    // ✅ usa EstoqueService
-    await this.estoqueService.adicionarAoTecnico(
-      pedido.tecnicoId,
+    if (!pedido) {
+      throw new BadRequestException("Pedido não encontrado");
+    }
+
+    if (!pedido.tecnico?.filialId) {
+      throw new BadRequestException("Técnico não está vinculado a uma filial");
+    }
+
+    // Verifica estoque na filial do técnico
+    const estoqueFilial = await this.prisma.estoque.findFirst({
+      where: { produtoId: pedido.produtoId, filialId: pedido.tecnico.filialId },
+    });
+
+    if (!estoqueFilial || estoqueFilial.quantidade < pedido.quantidade) {
+      throw new BadRequestException(
+        `Estoque insuficiente na filial (${pedido.tecnico.filial?.nome ?? "desconhecida"})`
+      );
+    }
+
+    // Faz a transferência: filial → técnico
+    await this.estoqueService.transferirParaTecnico(
       pedido.produtoId,
+      pedido.tecnico.filialId,
+      pedido.tecnicoId,
       pedido.quantidade,
     );
 
-    return pedido;
+    // Atualiza status para APROVADO
+    return this.prisma.pedidoEstoque.update({
+      where: { id },
+      data: { status: "APROVADO" },
+      include: { produto: true, tecnico: true },
+    });
   }
+
+
 
   async rejeitarPedido(id: string) {
     const pedido = await this.prisma.pedidoEstoque.findUnique({ where: { id } });
