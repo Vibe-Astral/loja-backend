@@ -6,7 +6,7 @@ import {
   Param,
   Delete,
   UseGuards,
-  Req, 
+  Req,
   Patch
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -38,6 +38,17 @@ export class UsersController {
   @Delete(':id')
   async deletarUsuario(@Param('id') id: string) {
     return this.usersService.deletarUsuario(id);
+  }
+  @Patch(':id')
+  async atualizar(
+    @Param('id') id: string,
+    @Body() body: { filialId?: string },
+  ) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { filialId: body.filialId },
+      include: { filial: true },
+    });
   }
 
   // Qualquer usuário autenticado pode ver seu próprio perfil

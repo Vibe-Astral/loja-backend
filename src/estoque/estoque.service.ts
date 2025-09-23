@@ -220,30 +220,42 @@ export class EstoqueService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // 1. Verifica estoque de origem (filial)
       const origem = await tx.estoque.findFirst({
         where: { produtoId, filialId: origemFilialId },
       });
+      console.log("🔎 Origem (filial antes):", origem);
+
       if (!origem || origem.quantidade < quantidade) {
         throw new BadRequestException('Estoque insuficiente na filial de origem.');
       }
+
       await tx.estoque.update({
         where: { id: origem.id },
         data: { quantidade: origem.quantidade - quantidade },
       });
+      console.log("✅ Filial atualizada");
 
+      // 2. Busca ou cria estoque do técnico
       let destino = await tx.estoque.findFirst({
-        where: { produtoId, tecnicoId: destinoTecnicoId },
+        where: { produtoId, tecnicoId: destinoTecnicoId, filialId: null }, // 🔹 ajuste importante
       });
+      console.log("🔎 Destino (técnico antes):", destino);
+
       if (!destino) {
         destino = await tx.estoque.create({
-          data: { produtoId, tecnicoId: destinoTecnicoId, quantidade: 0 },
+          data: { produtoId, tecnicoId: destinoTecnicoId, filialId: null, quantidade: 0 },
         });
+        console.log("🆕 Criado estoque do técnico:", destino);
       }
+
       await tx.estoque.update({
         where: { id: destino.id },
         data: { quantidade: destino.quantidade + quantidade },
       });
+      console.log("✅ Técnico atualizado");
 
+      // 3. Movimentação
       await tx.movimentacaoEstoque.create({
         data: {
           tipo: $Enums.TipoMovimentacao.TRANSFERENCIA,
@@ -253,10 +265,12 @@ export class EstoqueService {
           destinoTecnicoId,
         },
       });
+      console.log("📦 Movimentação registrada");
 
       return { message: 'Transferência para técnico realizada com sucesso!' };
     });
   }
+
 
   // 🔄 Devolução técnico → filial
   async transferirDoTecnicoParaFilial(
