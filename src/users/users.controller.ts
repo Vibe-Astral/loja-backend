@@ -39,17 +39,18 @@ export class UsersController {
   async deletarUsuario(@Param('id') id: string) {
     return this.usersService.deletarUsuario(id);
   }
-  @Patch(':id')
-  async atualizar(
+  @Roles(Role.ADMIN)
+  @Patch(':id/filial')
+  async atualizarFilial(
     @Param('id') id: string,
     @Body() body: { filialId?: string },
   ) {
-    return this.prisma.user.update({
-      where: { id },
-      data: { filialId: body.filialId },
-      include: { filial: true },
-    });
+    if (!body.filialId) {
+      throw new BadRequestException('Informe o filialId');
+    }
+    return this.usersService.atualizarFilial(id, body.filialId);
   }
+
 
   // Qualquer usuário autenticado pode ver seu próprio perfil
   @UseGuards(JwtAuthGuard)

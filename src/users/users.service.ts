@@ -29,6 +29,14 @@ export class UsersService {
       filial: user.filial, // 👈 retorna o objeto filial
     };
   }
+  // src/users/users.service.ts
+  async atualizarFilial(id: string, filialId: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { filialId },
+      include: { filial: true },
+    });
+  }
 
   async listarTodos() {
     return this.prisma.user.findMany({
