@@ -49,7 +49,7 @@ export class PedidosService {
       where: { id },
       include: {
         produto: true,
-        tecnico: { include: { filial: true } },
+        tecnico: true, // já pega o user do técnico
       },
     });
 
@@ -57,25 +57,37 @@ export class PedidosService {
       throw new BadRequestException("Pedido não encontrado");
     }
 
-    if (!pedido.tecnico?.filialId) {
-      throw new BadRequestException("Técnico não está vinculado a uma filial");
+    // 🔹 Se o técnico não tiver filial vinculada, usa a Filial Principal como padrão
+    let filialOrigemId = pedido.tecnico?.filialId;
+    if (!filialOrigemId) {
+      const filialPadrao = await this.prisma.filial.findFirst({
+        where: { nome: "Filial Principal" }, // ajuste para o nome que você usa
+      });
+
+      if (!filialPadrao) {
+        throw new BadRequestException(
+          "Técnico não possui filial vinculada e nenhuma filial padrão foi encontrada"
+        );
+      }
+
+      filialOrigemId = filialPadrao.id;
     }
 
-    // Verifica estoque na filial do técnico
+    // Verifica estoque na filial escolhida
     const estoqueFilial = await this.prisma.estoque.findFirst({
-      where: { produtoId: pedido.produtoId, filialId: pedido.tecnico.filialId },
+      where: { produtoId: pedido.produtoId, filialId: filialOrigemId },
     });
 
     if (!estoqueFilial || estoqueFilial.quantidade < pedido.quantidade) {
       throw new BadRequestException(
-        `Estoque insuficiente na filial (${pedido.tecnico.filial?.nome ?? "desconhecida"})`
+        `Estoque insuficiente na filial de origem`
       );
     }
 
     // Faz a transferência: filial → técnico
     await this.estoqueService.transferirParaTecnico(
       pedido.produtoId,
-      pedido.tecnico.filialId,
+      filialOrigemId,
       pedido.tecnicoId,
       pedido.quantidade,
     );
@@ -87,6 +99,7 @@ export class PedidosService {
       include: { produto: true, tecnico: true },
     });
   }
+
 
 
 
