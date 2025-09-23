@@ -44,6 +44,8 @@ export class PedidosService {
   }
 
   async aprovarPedido(id: string) {
+    console.log("🔎 Iniciando aprovação do pedido:", id);
+
     // Busca pedido e informações do técnico
     const pedido = await this.prisma.pedidoEstoque.findUnique({
       where: { id },
@@ -54,23 +56,39 @@ export class PedidosService {
     });
 
     if (!pedido) {
+      console.error("❌ Pedido não encontrado no banco:", id);
       throw new BadRequestException("Pedido não encontrado");
     }
+
+    console.log("📦 Pedido encontrado:", {
+      id: pedido.id,
+      produtoId: pedido.produtoId,
+      tecnicoId: pedido.tecnicoId,
+      filialId: pedido.tecnico?.filialId,
+      quantidade: pedido.quantidade,
+      status: pedido.status,
+    });
 
     // 🔹 Se o técnico não tiver filial vinculada, usa a Filial Principal como padrão
     let filialOrigemId = pedido.tecnico?.filialId;
     if (!filialOrigemId) {
+      console.warn("⚠️ Técnico não possui filial vinculada, buscando filial padrão...");
+
       const filialPadrao = await this.prisma.filial.findFirst({
         where: { nome: "Filial Principal" }, // ajuste para o nome que você usa
       });
 
       if (!filialPadrao) {
+        console.error("❌ Nenhuma filial padrão encontrada!");
         throw new BadRequestException(
           "Técnico não possui filial vinculada e nenhuma filial padrão foi encontrada"
         );
       }
 
       filialOrigemId = filialPadrao.id;
+      console.log("🏢 Usando filial padrão:", filialOrigemId);
+    } else {
+      console.log("🏢 Usando filial vinculada ao técnico:", filialOrigemId);
     }
 
     // Verifica estoque na filial escolhida
@@ -78,27 +96,42 @@ export class PedidosService {
       where: { produtoId: pedido.produtoId, filialId: filialOrigemId },
     });
 
+    if (!estoqueFilial) {
+      console.error("❌ Nenhum estoque encontrado na filial:", filialOrigemId);
+    } else {
+      console.log("📉 Estoque encontrado na filial:", {
+        produtoId: pedido.produtoId,
+        filialId: filialOrigemId,
+        quantidade: estoqueFilial.quantidade,
+      });
+    }
+
     if (!estoqueFilial || estoqueFilial.quantidade < pedido.quantidade) {
-      throw new BadRequestException(
-        `Estoque insuficiente na filial de origem`
-      );
+      throw new BadRequestException("Estoque insuficiente na filial de origem");
     }
 
     // Faz a transferência: filial → técnico
+    console.log("🚚 Iniciando transferência para técnico...");
     await this.estoqueService.transferirParaTecnico(
       pedido.produtoId,
       filialOrigemId,
       pedido.tecnicoId,
       pedido.quantidade,
     );
+    console.log("✅ Transferência concluída para técnico:", pedido.tecnicoId);
 
     // Atualiza status para APROVADO
-    return this.prisma.pedidoEstoque.update({
+    const atualizado = await this.prisma.pedidoEstoque.update({
       where: { id },
       data: { status: "APROVADO" },
       include: { produto: true, tecnico: true },
     });
+
+    console.log("🟢 Pedido atualizado para APROVADO:", atualizado.id);
+
+    return atualizado;
   }
+
 
 
 
