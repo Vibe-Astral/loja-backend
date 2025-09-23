@@ -34,6 +34,10 @@ export class EstoqueController {
     saldoGeralPorProduto() {
         return this.estoqueService.saldoGeralPorProduto();
     }
+    @Get("disponiveis/:filialId")
+    async listarDisponiveis(@Param("filialId") filialId: string) {
+        return this.estoqueService.listarDisponiveis(filialId);
+    }
 
     @Get('saldo/:produtoId')
     saldoProduto(@Param('produtoId') produtoId: string) {

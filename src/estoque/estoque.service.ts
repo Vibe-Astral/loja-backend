@@ -149,10 +149,11 @@ export class EstoqueService {
       },
     });
   }
-  @Get("disponiveis/:filialId")
-  async listarDisponiveis(@Param("filialId") filialId: string) {
-    return this.estoqueService.listarPorFilial(filialId);
+
+  async listarDisponiveis(filialId: string) {
+    return this.listarPorFilial(filialId);
   }
+
   // 🔄 Transferência entre filiais
   async transferir(
     produtoId: string,
