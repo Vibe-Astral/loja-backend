@@ -1,12 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-@Injectable()
-export class VendasService {
-  constructor(private prisma: PrismaService) { }
-
-  import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class VendasService {
@@ -113,5 +107,6 @@ export class VendasService {
     const ticketMedio = qtd > 0 ? total / qtd : 0;
 
     return { total, qtd, ticketMedio };
+
   }
 }
