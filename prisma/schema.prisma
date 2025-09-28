@@ -159,20 +159,14 @@ model Venda {
   id          String   @id @default(uuid())
   consultorId String
   consultor   User     @relation("ConsultorVendas", fields: [consultorId], references: [id])
-
-  // Cliente pode ser um User cadastrado
-  clienteId   String?
+  clienteId   String? // <-- agora pode ser nulo
   cliente     User?    @relation("ClienteVendas", fields: [clienteId], references: [id])
-
-  // Ou pode ser apenas um nome avulso
-  clienteNome String?
-
+  clienteNome String? // nome digitado livremente
   total       Float
   createdAt   DateTime @default(now())
 
   items VendaItem[]
 }
-
 
 model VendaItem {
   id         String  @id @default(uuid())
