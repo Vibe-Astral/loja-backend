@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class VendasService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async criarVenda(
     consultorId: string,
@@ -11,23 +11,33 @@ export class VendasService {
     items: { produtoId: string; quantidade: number }[],
   ) {
     let total = 0;
-    const vendaItems = [];
+    const vendaItems: { produtoId: string; quantidade: number; preco: number }[] = [];
 
     for (const item of items) {
+      // Busca o produto
       const produto = await this.prisma.produto.findUnique({
         where: { id: item.produtoId },
       });
       if (!produto) throw new NotFoundException('Produto não encontrado');
-      if (produto.quantidade < item.quantidade) {
+
+      // Busca estoque global (ou por filial, se quiser detalhar)
+      const estoque = await this.prisma.estoque.findFirst({
+        where: { produtoId: produto.id },
+      });
+      if (!estoque) throw new NotFoundException(`Estoque não encontrado para ${produto.nome}`);
+
+      if (estoque.quantidade < item.quantidade) {
         throw new BadRequestException(`Estoque insuficiente para ${produto.nome}`);
       }
 
-      await this.prisma.produto.update({
-        where: { id: produto.id },
+      // Baixa no estoque
+      await this.prisma.estoque.update({
+        where: { id: estoque.id },
         data: { quantidade: { decrement: item.quantidade } },
       });
 
       total += produto.preco * item.quantidade;
+
       vendaItems.push({
         produtoId: produto.id,
         quantidade: item.quantidade,
@@ -38,7 +48,7 @@ export class VendasService {
     return this.prisma.venda.create({
       data: {
         consultorId,
-        clienteId, // 👈 FK do cliente (User com role CLIENTE)
+        clienteId,
         total,
         items: { create: vendaItems },
       },
@@ -49,6 +59,7 @@ export class VendasService {
       },
     });
   }
+
 
   async listarVendas() {
     return this.prisma.venda.findMany({
