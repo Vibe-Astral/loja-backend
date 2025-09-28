@@ -5,6 +5,13 @@ import { PrismaService } from '../prisma/prisma.service';
 export class VendasService {
   constructor(private prisma: PrismaService) { }
 
+  import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+
+@Injectable()
+export class VendasService {
+  constructor(private prisma: PrismaService) {}
+
   async criarVenda(
     consultorId: string,
     clienteId: string,
@@ -13,6 +20,15 @@ export class VendasService {
     let total = 0;
     const vendaItems: { produtoId: string; quantidade: number; preco: number }[] = [];
 
+    // Descobre a filial do consultor (estoque global da filial)
+    const consultor = await this.prisma.user.findUnique({
+      where: { id: consultorId },
+      select: { filialId: true },
+    });
+    if (!consultor?.filialId) {
+      throw new BadRequestException('Consultor não vinculado a nenhuma filial');
+    }
+
     for (const item of items) {
       // Busca o produto
       const produto = await this.prisma.produto.findUnique({
@@ -20,17 +36,19 @@ export class VendasService {
       });
       if (!produto) throw new NotFoundException('Produto não encontrado');
 
-      // Busca estoque global (ou por filial, se quiser detalhar)
+      // Busca o estoque global (na filial do consultor)
       const estoque = await this.prisma.estoque.findFirst({
-        where: { produtoId: produto.id },
+        where: { produtoId: produto.id, filialId: consultor.filialId },
       });
-      if (!estoque) throw new NotFoundException(`Estoque não encontrado para ${produto.nome}`);
+      if (!estoque) {
+        throw new NotFoundException(`Estoque não encontrado para ${produto.nome} na filial`);
+      }
 
       if (estoque.quantidade < item.quantidade) {
         throw new BadRequestException(`Estoque insuficiente para ${produto.nome}`);
       }
 
-      // Baixa no estoque
+      // Faz baixa no estoque global
       await this.prisma.estoque.update({
         where: { id: estoque.id },
         data: { quantidade: { decrement: item.quantidade } },
@@ -45,6 +63,7 @@ export class VendasService {
       });
     }
 
+    // Cria a venda e vincula cliente + consultor
     return this.prisma.venda.create({
       data: {
         consultorId,
@@ -59,6 +78,7 @@ export class VendasService {
       },
     });
   }
+}
 
 
   async listarVendas() {
