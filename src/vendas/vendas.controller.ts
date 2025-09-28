@@ -5,16 +5,16 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('vendas')
 @UseGuards(JwtAuthGuard)
 export class VendasController {
-  constructor(private readonly vendasService: VendasService) {}
+  constructor(private readonly vendasService: VendasService) { }
 
   @Post()
   async criarVenda(@Req() req, @Body() body) {
     const consultorId = req.user.id;
 
-    // body deve conter clienteId e items
     return this.vendasService.criarVenda(
       consultorId,
-      body.clienteId,   // 👈 agora é clienteId (User.id do cliente)
+      body.clienteId || null,
+      body.clienteNome || null,
       body.items,
     );
   }

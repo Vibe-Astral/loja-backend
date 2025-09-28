@@ -156,18 +156,23 @@ enum StatusPedido {
 }
 
 model Venda {
-  id          String @id @default(uuid())
+  id          String   @id @default(uuid())
   consultorId String
-  consultor   User   @relation("ConsultorVendas", fields: [consultorId], references: [id])
+  consultor   User     @relation("ConsultorVendas", fields: [consultorId], references: [id])
 
-  clienteId String
-  cliente   User   @relation("ClienteVendas", fields: [clienteId], references: [id])
+  // Cliente pode ser um User cadastrado
+  clienteId   String?
+  cliente     User?    @relation("ClienteVendas", fields: [clienteId], references: [id])
 
-  total     Float
-  createdAt DateTime @default(now())
+  // Ou pode ser apenas um nome avulso
+  clienteNome String?
+
+  total       Float
+  createdAt   DateTime @default(now())
 
   items VendaItem[]
 }
+
 
 model VendaItem {
   id         String  @id @default(uuid())
