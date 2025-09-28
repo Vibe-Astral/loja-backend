@@ -81,5 +81,17 @@ export class UsersService {
 
     return { id: user.id, email: user.email, role: user.role, filial: user.filial };
   }
+  async findAllClientes() {
+    return this.prisma.user.findMany({
+      where: { role: 'CLIENTE' },
+      select: {
+        id: true,
+        email: true,
+        nome: true,
+      },
+    });
+  }
+
+
 
 }

@@ -51,6 +51,11 @@ export class UsersController {
     }
     return this.usersService.atualizarFilial(id, body.filialId);
   }
+  @Roles(Role.ADMIN, Role.CONSULTOR) // 👈 ou remover se qualquer autenticado pode
+  @Get('clientes')
+  async getClientes() {
+    return this.usersService.findAllClientes();
+  }
 
 
   // Qualquer usuário autenticado pode ver seu próprio perfil
