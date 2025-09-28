@@ -70,4 +70,17 @@ export class ProdutosService {
       where: { id },
     });
   }
+  async listarProdutosDaFilial(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { filialId: true },
+    });
+
+    if (!user?.filialId) return [];
+
+    return this.prisma.estoque.findMany({
+      where: { filialId: user.filialId, quantidade: { gt: 0 } },
+      include: { produto: true },
+    });
+  }
 }

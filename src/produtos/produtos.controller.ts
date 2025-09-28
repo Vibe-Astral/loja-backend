@@ -38,5 +38,9 @@ export class ProdutosController {
   async update(@Param('id') id: string, @Body() dto: CreateProdutoDto) {
     return this.produtosService.update(id, dto);
   }
-
+  @Get('estoque')
+  async listarComEstoque(@Req() req: any) {
+    const userId = req.user.id;
+    return this.produtosService.listarProdutosDaFilial(userId);
+  }
 }
