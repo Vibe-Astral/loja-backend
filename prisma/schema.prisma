@@ -3,9 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
+  directUrl    = env("DIRECT_DATABASE_URL")
   relationMode = "prisma"
 }
 
@@ -29,6 +29,10 @@ model User {
   movDestino MovimentacaoEstoque[] @relation("MovDestinoTecnico")
 
   pedidos PedidoEstoque[]
+
+  // 👇 novos relacionamentos claros
+  vendasComoConsultor Venda[] @relation("ConsultorVendas")
+  vendasComoCliente   Venda[] @relation("ClienteVendas")
 }
 
 model Filial {
@@ -51,6 +55,7 @@ model Produto {
   estoque       Estoque[]
   movimentacoes MovimentacaoEstoque[]
   pedidos       PedidoEstoque[]
+  vendaItems    VendaItem[]
 }
 
 model Estoque {
@@ -148,4 +153,28 @@ enum StatusPedido {
   DEVOLUCAO_PENDENTE
   DEVOLUCAO_APROVADA
   DEVOLUCAO_REJEITADA
+}
+
+model Venda {
+  id          String @id @default(uuid())
+  consultorId String
+  consultor   User   @relation("ConsultorVendas", fields: [consultorId], references: [id])
+
+  clienteId String
+  cliente   User   @relation("ClienteVendas", fields: [clienteId], references: [id])
+
+  total     Float
+  createdAt DateTime @default(now())
+
+  items VendaItem[]
+}
+
+model VendaItem {
+  id         String  @id @default(uuid())
+  vendaId    String
+  venda      Venda   @relation(fields: [vendaId], references: [id])
+  produtoId  String
+  produto    Produto @relation(fields: [produtoId], references: [id])
+  quantidade Int
+  preco      Float
 }
