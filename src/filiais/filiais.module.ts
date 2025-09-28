@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import { FiliaisController } from './filiais.controller';
 import { FiliaisService } from './filiais.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Module({
   controllers: [FiliaisController],
