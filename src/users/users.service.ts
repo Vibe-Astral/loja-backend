@@ -87,11 +87,8 @@ export class UsersService {
       select: {
         id: true,
         email: true,
-        nome: true,
+        nome: true, // agora permitido
       },
     });
   }
-
-
-
 }
