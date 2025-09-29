@@ -1,10 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
+import { MovimentacaoService } from '../movimentacao/movimentacao.service';
 
 @Injectable()
 export class VendasService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private movimentacaoService: MovimentacaoService,
+  ) {}
 
   async criarVenda(
     consultorId: string,
@@ -15,34 +18,41 @@ export class VendasService {
     let total = 0;
     const vendaItems: { produtoId: string; quantidade: number; preco: number }[] = [];
 
-    // Filial do consultor
+    // validar consultor
     const consultor = await this.prisma.user.findUnique({
       where: { id: consultorId },
-      select: { filialId: true },
     });
-    if (!consultor?.filialId) {
-      throw new BadRequestException('Consultor não vinculado a nenhuma filial');
-    }
+    if (!consultor) throw new NotFoundException('Consultor não encontrado');
 
     for (const item of items) {
       const produto = await this.prisma.produto.findUnique({ where: { id: item.produtoId } });
       if (!produto) throw new NotFoundException('Produto não encontrado');
 
+      // valida estoque do consultor
       const estoque = await this.prisma.estoque.findFirst({
-        where: { produtoId: produto.id, filialId: consultor.filialId },
+        where: { produtoId: produto.id, tecnicoId: consultorId },
       });
-      if (!estoque) throw new NotFoundException(`Estoque não encontrado para ${produto.nome}`);
-      if (estoque.quantidade < item.quantidade) {
+      if (!estoque || estoque.quantidade < item.quantidade) {
         throw new BadRequestException(`Estoque insuficiente para ${produto.nome}`);
       }
 
-      await this.prisma.estoque.update({
-        where: { id: estoque.id },
-        data: { quantidade: { decrement: item.quantidade } },
-      });
+      // registrar movimentação de VENDA
+      await this.movimentacaoService.registrarMovimentacao(
+        produto.id,
+        'VENDA',
+        item.quantidade,
+        undefined, // origem filial
+        undefined, // destino filial
+        consultorId, // origem técnico
+        undefined, // destino técnico
+      );
 
       total += produto.preco * item.quantidade;
-      vendaItems.push({ produtoId: produto.id, quantidade: item.quantidade, preco: produto.preco });
+      vendaItems.push({
+        produtoId: produto.id,
+        quantidade: item.quantidade,
+        preco: produto.preco,
+      });
     }
 
     return this.prisma.venda.create({
@@ -61,13 +71,11 @@ export class VendasService {
     });
   }
 
-
-
   async listarVendas() {
     return this.prisma.venda.findMany({
       include: {
         consultor: true,
-        cliente: true, // 👈 agora também traz o cliente
+        cliente: true,
         items: { include: { produto: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -107,6 +115,5 @@ export class VendasService {
     const ticketMedio = qtd > 0 ? total / qtd : 0;
 
     return { total, qtd, ticketMedio };
-
   }
 }

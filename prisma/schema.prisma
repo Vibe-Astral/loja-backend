@@ -145,6 +145,7 @@ enum TipoMovimentacao {
   SAIDA
   TRANSFERENCIA
   DEVOLUCAO
+  VENDA
 }
 
 enum StatusPedido {

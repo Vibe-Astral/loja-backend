@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsUUID, IsInt , Min } from 'class-validator';
 
 export class CriarEntradaDto {
   @IsUUID()
@@ -60,4 +60,16 @@ export class CriarTransferenciaDto {
   @IsUUID()
   @IsOptional()
   destinoTecnicoId?: string;
+}
+
+export class CriarVendaDto {
+  @IsUUID()
+  produtoId: string;
+
+  @IsInt()
+  @Min(1)
+  quantidade: number;
+
+  @IsUUID()
+  consultorId: string; // origem do estoque
 }

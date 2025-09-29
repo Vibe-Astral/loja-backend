@@ -12,7 +12,7 @@ const includeAll = {
 
 @Injectable()
 export class MovimentacaoService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async listarTodas() {
     return this.prisma.movimentacaoEstoque.findMany({
@@ -76,18 +76,19 @@ export class MovimentacaoService {
       }
     }
 
-    if (tipo === 'SAIDA') {
+    if (tipo === 'SAIDA' || tipo === 'VENDA') {
       if (origemTargets !== 1) {
-        throw new BadRequestException('Saída requer exatamente uma origem (filial OU técnico)');
+        throw new BadRequestException(`${tipo} requer exatamente uma origem (filial OU técnico)`);
       }
     }
+
 
     if (tipo === 'TRANSFERENCIA') {
       if (origemTargets !== 1 || destinoTargets !== 1) {
         throw new BadRequestException('Transferência requer uma origem e um destino (um de cada)');
       }
       if ((origemFilialId && destinoFilialId && origemFilialId === destinoFilialId) ||
-          (origemTecnicoId && destinoTecnicoId && origemTecnicoId === destinoTecnicoId)) {
+        (origemTecnicoId && destinoTecnicoId && origemTecnicoId === destinoTecnicoId)) {
         throw new BadRequestException('Origem e destino não podem ser iguais');
       }
     }

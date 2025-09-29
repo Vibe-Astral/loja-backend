@@ -9,7 +9,7 @@ import { Role } from '@prisma/client';
 @Controller('movimentacoes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MovimentacaoController {
-  constructor(private readonly movimentacaoService: MovimentacaoService) {}
+  constructor(private readonly movimentacaoService: MovimentacaoService) { }
 
   // consultas
   @Get()
@@ -62,4 +62,18 @@ export class MovimentacaoController {
       dto.origemTecnicoId, dto.destinoTecnicoId,
     );
   }
+  @Roles(Role.CONSULTOR, Role.ADMIN)
+  @Post('venda')
+  registrarVenda(@Body() dto: CriarVendaDto) {
+    return this.movimentacaoService.registrarMovimentacao(
+      dto.produtoId,
+      'VENDA',
+      dto.quantidade,
+      undefined, // origemFilial
+      undefined, // destinoFilial
+      dto.consultorId, // origemTecnico
+      undefined, // destinoTecnico
+    );
+  }
+
 }

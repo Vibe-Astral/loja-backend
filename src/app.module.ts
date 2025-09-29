@@ -8,9 +8,10 @@ import { PedidosModule } from './pedidos/pedidos.module';
 import { ProdutosModule } from './produtos/produtos.module';
 import { FiliaisModule } from './filiais/filiais.module';
 import { VendasModule } from './vendas/vendas.module';
+import { RelatoriosModule } from './relatorios/relatorios.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, EstoqueModule, MovimentacaoModule, PedidosModule, ProdutosModule, FiliaisModule, VendasModule],
+  imports: [AuthModule, UsersModule, EstoqueModule, MovimentacaoModule, PedidosModule, ProdutosModule, FiliaisModule, VendasModule, RelatoriosModule],
   providers: [PrismaService],
 })
 export class AppModule {}
