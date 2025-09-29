@@ -67,7 +67,6 @@ export class RelatoriosService {
             produtosMaisVendidos,
         };
     }
-}
 
     // 📊 Produtos mais vendidos (via groupBy)
     async produtosMaisVendidos(inicio: Date, fim: Date): Promise < RelatorioProdutosDto[] > {
