@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { MovimentacaoService } from './movimentacao.service';
 import { CriarEntradaDto, CriarSaidaDto, CriarTransferenciaDto } from './dto/create-movimentacao.dto';
@@ -5,6 +6,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { CriarVendaDto } from './dto/criar-venda.dto';
 
 @Controller('movimentacoes')
 @UseGuards(JwtAuthGuard, RolesGuard)
