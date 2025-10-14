@@ -15,6 +15,7 @@ export class OrdensService {
 
   async criarOrdem(dto: CreateOrdemDto) {
     const codigo = 'OS-' + Math.floor(100000 + Math.random() * 900000);
+
     return this.prisma.ordemServico.create({
       data: {
         codigo,
@@ -23,8 +24,13 @@ export class OrdensService {
         clienteNome: dto.clienteNome || null,
         tecnicoId: dto.tecnicoId,
       },
+      include: {
+        tecnico: { select: { id: true, nome: true, email: true } },
+        cliente: { select: { id: true, nome: true, email: true } },
+      },
     });
   }
+
 
   async adicionarItem(dto: AddItemDto) {
     const ordem = await this.prisma.ordemServico.findUnique({
@@ -129,17 +135,32 @@ export class OrdensService {
       orderBy: { createdAt: 'desc' },
     });
   }
+  async listarOrdens() {
+    return this.prisma.ordemServico.findMany({
+      include: {
+        tecnico: { select: { id: true, nome: true, email: true } },
+        cliente: { select: { id: true, nome: true, email: true } },
+        itens: {
+          include: {
+            produto: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
 
   async buscarPorId(id: string) {
     return this.prisma.ordemServico.findUnique({
       where: { id },
       include: {
-        cliente: true,
-        tecnico: true,
+        tecnico: { select: { id: true, nome: true, email: true } },
+        cliente: { select: { id: true, nome: true, email: true } },
         itens: { include: { produto: true } },
       },
     });
   }
+
   async assumirOrdem(ordemId: string, tecnicoId: string) {
     const ordem = await this.prisma.ordemServico.findUnique({ where: { id: ordemId } });
     if (!ordem) throw new NotFoundException('Ordem não encontrada');
