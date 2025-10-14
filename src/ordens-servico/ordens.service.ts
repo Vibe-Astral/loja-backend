@@ -7,7 +7,7 @@ import { TipoMovimentacao } from '@prisma/client';
 
 @Injectable()
 export class OrdensService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async criarOrdem(dto: CreateOrdemDto) {
     const codigo = 'OS-' + Math.floor(100000 + Math.random() * 900000);
@@ -82,4 +82,16 @@ export class OrdensService {
       },
     });
   }
+  async listarComFiltro(filtro: any) {
+    return this.prisma.ordemServico.findMany({
+      where: filtro,
+      include: {
+        cliente: true,
+        tecnico: true,
+        itens: { include: { produto: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
 }
