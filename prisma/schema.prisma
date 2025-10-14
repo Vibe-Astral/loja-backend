@@ -16,7 +16,7 @@ model User {
   role      Role
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  nome      String?  
+  nome      String?
 
   // relações
   filial   Filial? @relation(fields: [filialId], references: [id])
@@ -57,6 +57,7 @@ model Produto {
   movimentacoes MovimentacaoEstoque[]
   pedidos       PedidoEstoque[]
   vendaItems    VendaItem[]
+  ordemItens    OrdemServicoItem[]
 }
 
 model Estoque {
@@ -73,19 +74,6 @@ model Estoque {
   tecnicoId String?
 
   @@unique([produtoId, tecnicoId, filialId])
-}
-
-model OrdemServico {
-  id        String   @id @default(uuid())
-  status    Status   @default(ABERTA)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  cliente   User   @relation("OrdensCliente", fields: [clienteId], references: [id])
-  clienteId String
-
-  tecnico   User?   @relation("OrdensTecnico", fields: [tecnicoId], references: [id])
-  tecnicoId String?
 }
 
 model MovimentacaoEstoque {
@@ -178,4 +166,31 @@ model VendaItem {
   produto    Produto @relation(fields: [produtoId], references: [id])
   quantidade Int
   preco      Float
+}
+
+model OrdemServico {
+  id        String   @id @default(uuid())
+  codigo    String   @unique
+  descricao String?
+  status    Status   @default(ABERTA)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cliente   User   @relation("OrdensCliente", fields: [clienteId], references: [id])
+  clienteId String
+
+  tecnico   User?   @relation("OrdensTecnico", fields: [tecnicoId], references: [id])
+  tecnicoId String?
+
+  itens OrdemServicoItem[]
+}
+
+model OrdemServicoItem {
+  id         String       @id @default(uuid())
+  ordemId    String
+  ordem      OrdemServico @relation(fields: [ordemId], references: [id])
+  produtoId  String
+  produto    Produto      @relation(fields: [produtoId], references: [id])
+  quantidade Int
+  observacao String?
 }

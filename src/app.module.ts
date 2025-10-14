@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { PrismaService } from './prisma/prisma.service';
@@ -9,9 +10,10 @@ import { ProdutosModule } from './produtos/produtos.module';
 import { FiliaisModule } from './filiais/filiais.module';
 import { VendasModule } from './vendas/vendas.module';
 import { RelatoriosModule } from './relatorios/relatorios.module';
+import { OrdensModule } from './ordens-servico/ordens.module';
 
 @Module({
-  imports: [AuthModule, UsersModule, EstoqueModule, MovimentacaoModule, PedidosModule, ProdutosModule, FiliaisModule, VendasModule, RelatoriosModule],
+  imports: [AuthModule, UsersModule, EstoqueModule, MovimentacaoModule, PedidosModule, ProdutosModule, FiliaisModule, VendasModule, RelatoriosModule, OrdensModule],
   providers: [PrismaService],
 })
 export class AppModule {}
