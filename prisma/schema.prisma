@@ -176,11 +176,11 @@ model OrdemServico {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cliente   User   @relation("OrdensCliente", fields: [clienteId], references: [id])
-  clienteId String
-
-  tecnico   User?   @relation("OrdensTecnico", fields: [tecnicoId], references: [id])
-  tecnicoId String?
+  cliente     User?   @relation("OrdensCliente", fields: [clienteId], references: [id])
+  clienteId   String?
+  clienteNome String?
+  tecnico     User?   @relation("OrdensTecnico", fields: [tecnicoId], references: [id])
+  tecnicoId   String?
 
   itens OrdemServicoItem[]
 }

@@ -15,9 +15,10 @@ export class OrdensService {
     return this.prisma.ordemServico.create({
       data: {
         codigo,
-        clienteId: dto.clienteId,
-        tecnicoId: dto.tecnicoId,
         descricao: dto.descricao,
+        clienteId: dto.clienteId || null,
+        clienteNome: dto.clienteNome || null,
+        tecnicoId: dto.tecnicoId,
       },
     });
   }
