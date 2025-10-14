@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Patch, UseGuards, Req, Query} from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, UseGuards, Req, Query } from '@nestjs/common';
 import { OrdensService } from './ordens.service';
 import { CreateOrdemDto } from './dto/create-ordem.dto';
 import { AddItemDto } from './dto/add-item.dto';
@@ -33,7 +33,11 @@ export class OrdensController {
   atualizarStatus(@Body() dto: UpdateStatusDto) {
     return this.ordensService.atualizarStatus(dto);
   }
-
+  @Post(':id/assumir')
+  async assumir(@Param('id') id: string, @Req() req) {
+    const tecnicoId = req.user.id;
+    return this.ordensService.assumirOrdem(id, tecnicoId);
+  }
   @Get()
   @UseGuards(JwtAuthGuard)
   async listar(@Req() req, @Query() query) {

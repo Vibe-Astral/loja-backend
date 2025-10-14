@@ -149,11 +149,14 @@ model Venda {
   id          String   @id @default(uuid())
   consultorId String
   consultor   User     @relation("ConsultorVendas", fields: [consultorId], references: [id])
-  clienteId   String? // <-- agora pode ser nulo
+  clienteId   String?
   cliente     User?    @relation("ClienteVendas", fields: [clienteId], references: [id])
-  clienteNome String? // nome digitado livremente
+  clienteNome String?
   total       Float
   createdAt   DateTime @default(now())
+
+  ordemId String? // 🔹 O.S. vinculada
+  ordem   OrdemServico? @relation("VendaDaOrdem", fields: [ordemId], references: [id])
 
   items VendaItem[]
 }
@@ -179,10 +182,12 @@ model OrdemServico {
   cliente     User?   @relation("OrdensCliente", fields: [clienteId], references: [id])
   clienteId   String?
   clienteNome String?
-  tecnico     User?   @relation("OrdensTecnico", fields: [tecnicoId], references: [id])
-  tecnicoId   String?
+
+  tecnico   User?   @relation("OrdensTecnico", fields: [tecnicoId], references: [id])
+  tecnicoId String?
 
   itens OrdemServicoItem[]
+  venda Venda[]            @relation("VendaDaOrdem") // 🔹 Nova relação
 }
 
 model OrdemServicoItem {
