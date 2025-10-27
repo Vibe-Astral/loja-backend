@@ -5,7 +5,7 @@ import { MovimentacaoService } from '../movimentacao/movimentacao.service';
 import { CreateOrdemDto } from './dto/create-ordem.dto';
 import { AddItemDto } from './dto/add-item.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
-import { Prisma, TipoMovimentacao } from '@prisma/client';
+import { Status, TipoMovimentacao } from '@prisma/client';
 
 @Injectable()
 export class OrdensService {
@@ -23,7 +23,7 @@ export class OrdensService {
         clienteId: dto.clienteId || null,
         clienteNome: dto.clienteNome || null,
         tecnicoId: dto.tecnicoId || null,
-        status: 'ABERTA', // 👈 GARANTE que novas O.S. entram como abertas
+        status: Status.ABERTA, // 👈 GARANTE que novas O.S. entram como abertas
       },
       include: {
         tecnico: { select: { id: true, nome: true, email: true } },
