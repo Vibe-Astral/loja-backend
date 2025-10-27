@@ -15,7 +15,6 @@ export class OrdensController {
   @UseGuards(JwtAuthGuard)
   async criar(@Req() req, @Body() dto: CreateOrdemDto) {
     const usuario = req.user;
-
     // Se o usuário for técnico e não informar técnicoId, ele próprio é o técnico
     const tecnicoId = dto.tecnicoId || (usuario.role === 'TECNICO' ? usuario.id : null);
 
@@ -50,13 +49,13 @@ export class OrdensController {
 
     // técnico vê só as dele
     if (usuario.role === 'TECNICO') {
-      filtroBase.tecnicoId = usuario.id;
-    }
-    // consultor/admin pode ver todas, ou filtrar por técnico
-    else if (tecnicoId) {
+      filtroBase.OR = [
+        { tecnicoId: usuario.id },
+        { tecnicoId: null, status: 'ABERTA' }, // 👈 inclui abertas
+      ];
+    } else if (tecnicoId) {
       filtroBase.tecnicoId = tecnicoId;
     }
-
     return this.ordensService.listarComFiltro(filtroBase);
   }
 
