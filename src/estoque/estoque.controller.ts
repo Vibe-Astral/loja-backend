@@ -10,11 +10,26 @@ import {
 import { EstoqueService } from './estoque.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('estoque')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class EstoqueController {
-    constructor(private readonly estoqueService: EstoqueService) { }
+    constructor(
+        private readonly estoqueService: EstoqueService,
+        private readonly prisma: PrismaService // ✅ adicionado "private readonly"
+    ) { }
+
+    // 🔹 Retorna o estoque do técnico logado
+    @Get('tecnico/me')
+    async listarEstoqueTecnico(@Req() req) {
+        const tecnicoId = req.user.id;
+        return this.prisma.estoque.findMany({
+            where: { tecnicoId },
+            include: { produto: true },
+            orderBy: { produto: { nome: 'asc' } },
+        });
+    }
 
     @Get('posicoes')
     listarPosicoes() {

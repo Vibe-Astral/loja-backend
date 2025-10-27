@@ -4,6 +4,8 @@ import { CreateOrdemDto } from './dto/create-ordem.dto';
 import { AddItemDto } from './dto/add-item.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('ordens-servico')
 export class OrdensController {
@@ -15,8 +17,7 @@ export class OrdensController {
     const usuario = req.user;
 
     // Se o usuário for técnico e não informar técnicoId, ele próprio é o técnico
-    const tecnicoId =
-      dto.tecnicoId || (usuario.role === 'TECNICO' ? usuario.id : null);
+    const tecnicoId = dto.tecnicoId || (usuario.role === 'TECNICO' ? usuario.id : null);
 
     return this.ordensService.criarOrdem({
       ...dto,
@@ -62,5 +63,11 @@ export class OrdensController {
   @Get(':id')
   buscarPorId(@Param('id') id: string) {
     return this.ordensService.buscarPorId(id);
+  }
+  // 🔄 Reabrir O.S. (ADMIN)
+  @Roles(Role.ADMIN)
+  @Post(':id/reabrir')
+  async reabrir(@Param('id') id: string) {
+    return this.ordensService.reabrirOrdem(id);
   }
 }

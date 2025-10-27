@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards, Req } from '@nestjs/common';
 import { MovimentacaoService } from './movimentacao.service';
 import { CriarEntradaDto, CriarSaidaDto, CriarTransferenciaDto } from './dto/create-movimentacao.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -11,7 +11,7 @@ import { CriarVendaDto } from './dto/criar-venda.dto';
 @Controller('movimentacoes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class MovimentacaoController {
-  constructor(private readonly movimentacaoService: MovimentacaoService) { }
+  constructor(private readonly movimentacaoService: MovimentacaoService, ) { }
 
   // consultas
   @Get()
@@ -77,5 +77,6 @@ export class MovimentacaoController {
       undefined, // destinoTecnico
     );
   }
+
 
 }
