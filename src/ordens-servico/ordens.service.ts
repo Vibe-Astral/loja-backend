@@ -12,7 +12,7 @@ export class OrdensService {
   constructor(
     private prisma: PrismaService,
     private movimentacaoService: MovimentacaoService,
-  ) {}
+  ) { }
 
   async criarOrdem(dto: CreateOrdemDto) {
     const codigo = 'OS-' + Math.floor(100000 + Math.random() * 900000);
@@ -23,6 +23,7 @@ export class OrdensService {
         clienteId: dto.clienteId || null,
         clienteNome: dto.clienteNome || null,
         tecnicoId: dto.tecnicoId || null,
+        status: 'ABERTA', // 👈 GARANTE que novas O.S. entram como abertas
       },
       include: {
         tecnico: { select: { id: true, nome: true, email: true } },
@@ -30,6 +31,7 @@ export class OrdensService {
       },
     });
   }
+
 
   async adicionarItem(dto: AddItemDto) {
     const ordem = await this.prisma.ordemServico.findUnique({ where: { id: dto.ordemId } });
