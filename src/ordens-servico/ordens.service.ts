@@ -121,6 +121,7 @@ export class OrdensService {
     });
   }
 
+
   async buscarPorId(id: string) {
     return this.prisma.ordemServico.findUnique({
       where: { id },

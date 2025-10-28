@@ -5,7 +5,7 @@ import { AddItemDto } from './dto/add-item.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Role } from '@prisma/client';
+import { Role, Status } from '@prisma/client';
 
 @Controller('ordens-servico')
 export class OrdensController {
@@ -51,7 +51,7 @@ export class OrdensController {
     if (usuario.role === 'TECNICO') {
       filtroBase.OR = [
         { tecnicoId: usuario.id },
-        { tecnicoId: null, status: 'ABERTA' }, // 👈 inclui abertas
+        { tecnicoId: null, status: Status.ABERTA }, // 👈 inclui abertas
       ];
     } else if (tecnicoId) {
       filtroBase.tecnicoId = tecnicoId;
