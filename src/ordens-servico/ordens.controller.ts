@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Patch, UseGuards, Req, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, UseGuards, Delete, Req, Query } from '@nestjs/common';
 import { OrdensService } from './ordens.service';
 import { CreateOrdemDto } from './dto/create-ordem.dto';
 import { AddItemDto } from './dto/add-item.dto';
@@ -53,6 +53,8 @@ export class OrdensController {
         { tecnicoId: usuario.id },
         { tecnicoId: null, status: Status.ABERTA }, // 👈 inclui abertas
       ];
+      console.log("👤 Usuário autenticado:", usuario.role, usuario.id);
+      console.log("📦 Filtro aplicado:", JSON.stringify(filtroBase, null, 2));
     } else if (tecnicoId) {
       filtroBase.tecnicoId = tecnicoId;
     }
@@ -64,9 +66,31 @@ export class OrdensController {
     return this.ordensService.buscarPorId(id);
   }
   // 🔄 Reabrir O.S. (ADMIN)
+  @Post(':id/assumir-admin')
   @Roles(Role.ADMIN)
+  async assumirComoAdmin(@Param('id') id: string, @Req() req) {
+    const adminId = req.user.id;
+    return this.ordensService.assumirOrdem(id, adminId);
+  }
+
+  // ✅ Atribuir uma O.S. a outro técnico
+  @Post(':id/atribuir')
+  @Roles(Role.ADMIN)
+  async atribuirOrdem(@Param('id') id: string, @Body('tecnicoId') tecnicoId: string) {
+    return this.ordensService.atribuirOrdem(id, tecnicoId);
+  }
+
+  // ✅ Reabrir uma O.S. fechada
   @Post(':id/reabrir')
+  @Roles(Role.ADMIN)
   async reabrir(@Param('id') id: string) {
     return this.ordensService.reabrirOrdem(id);
+  }
+
+  // ✅ Deletar O.S. indevida
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  async deletar(@Param('id') id: string) {
+    return this.ordensService.deletarOrdem(id);
   }
 }

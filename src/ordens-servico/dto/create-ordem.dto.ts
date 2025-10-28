@@ -1,6 +1,6 @@
 export class CreateOrdemDto {
-  clienteId?: string;   // opcional
-  clienteNome?: string; // novo campo
+  clienteId?: string;
+  clienteNome?: string; 
   descricao?: string;
   tecnicoId?: string;
 }

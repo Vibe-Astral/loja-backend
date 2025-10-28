@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { PrismaClient, Role, TipoMovimentacao } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 

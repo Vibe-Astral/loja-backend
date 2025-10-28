@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { IsNotEmpty, IsNumber, IsOptional, IsUUID, IsInt , Min } from 'class-validator';
 
 export class CriarEntradaDto {

@@ -109,18 +109,26 @@ export class OrdensService {
   }
 
   async listarComFiltro(filtro: any) {
-    return this.prisma.ordemServico.findMany({
+    const ordens = await this.prisma.ordemServico.findMany({
       where: filtro,
       include: {
         cliente: true,
-        tecnico: true,
+        tecnico: {
+          select: { id: true, nome: true, email: true }
+        },
         itens: { include: { produto: true } },
         venda: { select: { id: true, total: true, createdAt: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
-  }
 
+    // pós-processamento: garantir nome legível
+    return ordens.map((o) => ({
+      ...o,
+      tecnicoNome: o.tecnico?.nome || o.tecnico?.email || "Não designado",
+      clienteNome: o.cliente?.nome || o.clienteNome || "—"
+    }));
+  }
 
   async buscarPorId(id: string) {
     return this.prisma.ordemServico.findUnique({
@@ -196,5 +204,25 @@ export class OrdensService {
         },
       });
     });
+  }
+  async atribuirOrdem(ordemId: string, tecnicoId: string) {
+    const ordem = await this.prisma.ordemServico.findUnique({ where: { id: ordemId } });
+    if (!ordem) throw new NotFoundException('Ordem não encontrada');
+
+    return this.prisma.ordemServico.update({
+      where: { id: ordemId },
+      data: { tecnicoId, status: 'EM_ANDAMENTO' },
+      include: { tecnico: true, cliente: true },
+    });
+  }
+
+  // ✅ Deletar O.S.
+  async deletarOrdem(id: string) {
+    const ordem = await this.prisma.ordemServico.findUnique({ where: { id } });
+    if (!ordem) throw new NotFoundException('Ordem não encontrada');
+
+    await this.prisma.ordemServicoItem.deleteMany({ where: { ordemId: id } });
+    await this.prisma.venda.deleteMany({ where: { ordemId: id } });
+    return this.prisma.ordemServico.delete({ where: { id } });
   }
 }
